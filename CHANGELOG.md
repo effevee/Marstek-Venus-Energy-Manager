@@ -2,7 +2,11 @@
 
 ## [1.7.4] - 2026-05-02
 
+### Added
+- **Live charge hysteresis control per battery**: A new number entity (`Charge Hysteresis Percent`) is now exposed for each battery that has charge hysteresis enabled. The value can be changed at runtime from the battery's configuration menu without reloading the integration. Range expanded from 5-20% to **5-50%**.
+
 ### Changed
+- **Charge hysteresis maximum increased to 50%**: The config flow slider now allows values up to 50% (previously 20%), giving more flexibility for batteries with aggressive BMS cutoff behavior.
 - **Centralized price-based discharge block computation**: The `_price_based_discharge_blocked` flag is now computed once per cycle in a dedicated `_apply_price_discharge_block()` method before mode dispatch, instead of being set inside each price handler (dynamic pricing and real-time price). This guarantees the flag is always set even when a handler returns early (override active, cheap-slot active, max_soc transition), preventing PD discharge under cheap prices in those edge cases.
 - **More specific blocking reason in logs**: When charging is not allowed, the log message now distinguishes between "charge delay active" and "time slot configuration" so users can immediately understand why charging was blocked.
 - **Venus A maximum charge/discharge power updated to 1500 W**: `MAX_POWER_BY_VERSION["vA"]` was set to 1200 W, which underestimated the hardware limit. Updated to 1500 W so the config flow slider and all power calculations reflect the correct physical maximum.
