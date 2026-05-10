@@ -11,6 +11,10 @@
 - **SOC limits and charge hysteresis are now visible in the blocker registry**: Per-battery charge blocking caused by configured maximum SOC or active charge hysteresis is now recorded in `battery_charge_blockers`, and discharge blocking caused by minimum SOC is recorded in `battery_discharge_blockers`. The top-level `charge_blocked` and `discharge_blocked` attributes on Integration Status report the effective system state, so they become `true` when every known battery is blocked in that direction, even if the reason is per-battery rather than global.
 - **Hourly net balance uses the charge blocker registry for block reasons**: Positive hourly-balance compensation now reads the unified charge blockers for reasons such as solar charge delay, charge time-slot restriction, or EV pause, while keeping its existing local checks for charge hysteresis and max SOC.
 
+### Fixed
+- **Dynamic-price unit guidance and CKW parser compatibility**: Setup/options help text now asks for thresholds in the real sensor scale (`€/kWh` for Nordpool/PVPC, `CHF/kWh` for CKW), avoiding the old cent/Rappen guidance. The CKW slot parser also accepts CKW-derived entries that expose the total price as `value` or `integrated` in addition to `price`, without converting from Rappen.
+- **CKW price-based discharge block in Dynamic Pricing**: The discharge blocker no longer reads CKW's all-prices sensor state as the current price. That sensor may expose the number of slots (for example `96`) as its state and the real 15-minute prices in the `prices` attribute, so the blocker now derives the active slot price from `prices`. Dynamic Pricing also uses the daily slot average as the discharge threshold when no explicit average-price sensor is configured.
+
 ## [1.7.6] - 2026-05-09
 
 ### Changed

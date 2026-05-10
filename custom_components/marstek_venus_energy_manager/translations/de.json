@@ -176,7 +176,7 @@
         "data_description": {
           "price_integration_type": "Wählen Sie die Heimautomatisierungsintegration, die Strompreisdaten liefert",
           "price_sensor": "Sensor, der stündliche Strompreise enthält (z.B. sensor.nordpool_kwh_de_eur_3_10_025)",
-          "max_price_threshold": "Stunden über diesem Preis werden nicht ausgewählt. Gleiche Einheit wie der Sensor verwenden: ct/kWh für Nordpool, €/kWh für PVPC, Rp/kWh für CKW. Leer lassen, um alle Stunden zu verwenden.",
+          "max_price_threshold": "Stunden über diesem Preis werden nicht ausgewählt. Gleiche Einheit wie der Sensor verwenden: €/kWh für Nordpool/PVPC, CHF/kWh für CKW. Leer lassen, um alle Stunden zu verwenden.",
           "dp_price_discharge_control": "Wenn aktiviert, entlädt die Batterie nur, wenn der aktuelle Strompreis den Tagesdurchschnittspreis übersteigt (automatisch aus dem Preissensor berechnet). Falls Entladezeitfenster konfiguriert sind, müssen beide Bedingungen erfüllt sein.",
           "solar_forecast_sensor": "Sensor, der die Solarproduktionsprognose in kWh liefert (z.B. Solcast). Mit Solaranlage: konfigurieren — das System lädt nur dann aus dem Netz, wenn die Solarprognose unzureichend ist. Ohne Solaranlage: leer lassen — das System lädt, wenn die Batterieenergie für den Tag nicht ausreicht. Nicht erforderlich, wenn dieser Sensor bereits im ersten Schritt konfiguriert wurde — er wird automatisch verwendet.",
           "max_contracted_power": "Gesamt-Vertragsleistung (ICP) in Watt. Das System überschreitet dieses Limit beim Laden nicht, um ein Auslösen der Sicherung zu vermeiden",
@@ -526,7 +526,7 @@
         "data_description": {
           "price_integration_type": "Wählen Sie die Heimautomatisierungsintegration, die Strompreisdaten liefert",
           "price_sensor": "Sensor, der stündliche Strompreise enthält (z.B. sensor.nordpool_kwh_de_eur_3_10_025)",
-          "max_price_threshold": "Stunden über diesem Preis werden nicht ausgewählt. Gleiche Einheit wie der Sensor verwenden: ct/kWh für Nordpool, €/kWh für PVPC, Rp/kWh für CKW. Leer lassen, um alle Stunden zu verwenden.",
+          "max_price_threshold": "Stunden über diesem Preis werden nicht ausgewählt. Gleiche Einheit wie der Sensor verwenden: €/kWh für Nordpool/PVPC, CHF/kWh für CKW. Leer lassen, um alle Stunden zu verwenden.",
           "dp_price_discharge_control": "Wenn aktiviert, entlädt die Batterie nur, wenn der aktuelle Strompreis den Tagesdurchschnittspreis übersteigt (automatisch aus dem Preissensor berechnet). Falls Entladezeitfenster konfiguriert sind, müssen beide Bedingungen erfüllt sein.",
           "solar_forecast_sensor": "Sensor, der die Solarproduktionsprognose in kWh liefert (z.B. Solcast). Mit Solaranlage: konfigurieren — das System lädt nur dann aus dem Netz, wenn die Solarprognose unzureichend ist. Ohne Solaranlage: leer lassen — das System lädt, wenn die Batterieenergie für den Tag nicht ausreicht. Nicht erforderlich, wenn dieser Sensor bereits im ersten Schritt konfiguriert wurde — er wird automatisch verwendet.",
           "max_contracted_power": "Gesamt-Vertragsleistung (ICP) in Watt. Das System überschreitet dieses Limit beim Laden nicht, um ein Auslösen der Sicherung zu vermeiden",

@@ -2828,6 +2828,10 @@ class ChargeDischargeController:
                 start = entry.get("start")
                 end = entry.get("end")
                 price_val = entry.get("price")
+                if price_val is None:
+                    # Some CKW-derived sensors expose the total price under a
+                    # generic/value-style key. Values are expected in CHF/kWh.
+                    price_val = entry.get("value", entry.get("integrated"))
                 if start is None or end is None or price_val is None:
                     continue
                 # Parse ISO 8601 string timestamps if needed
@@ -2850,6 +2854,26 @@ class ChargeDischargeController:
         if self.price_integration_type == PRICE_INTEGRATION_CKW:
             return "CHF/kWh"
         return "€/kWh"
+
+    def _get_current_price(self) -> Optional[float]:
+        """Return the current period price from the configured price sensor."""
+        if not self.price_sensor:
+            return None
+
+        price_state = self.hass.states.get(self.price_sensor)
+        if price_state is None:
+            return None
+
+        if self.price_integration_type == PRICE_INTEGRATION_CKW:
+            now = datetime.now()
+            for slot in self._parse_ckw_prices(price_state.attributes):
+                if slot.start <= now < slot.end:
+                    return slot.price
+
+        try:
+            return float(price_state.state)
+        except (ValueError, TypeError):
+            return None
 
     def _parse_price_data(self) -> list:
         """Read price sensor and return list[PriceSlot] for the next 24 hours.
@@ -3817,8 +3841,8 @@ class ChargeDischargeController:
         If an average_price_sensor is configured its value is used as the threshold
         instead of the fixed max_price_threshold.
         """
-        price_state = self.hass.states.get(self.price_sensor)
-        if price_state is None:
+        current_price = self._get_current_price()
+        if current_price is None:
             _LOGGER.debug("Real-time price: price sensor %s unavailable", self.price_sensor)
             if self._realtime_price_charging:
                 self._realtime_price_charging = False
@@ -3826,12 +3850,6 @@ class ChargeDischargeController:
                 self._grid_charging_initialized = False
                 self.previous_power = 0
                 self.previous_error = 0
-            return
-
-        try:
-            current_price = float(price_state.state)
-        except (ValueError, TypeError):
-            _LOGGER.debug("Real-time price: cannot parse price state '%s'", price_state.state)
             return
 
         # Determine threshold: average sensor if configured, else fixed threshold
@@ -4060,8 +4078,9 @@ class ChargeDischargeController:
             self.remove_discharge_block("price_discharge")
             return
 
-        # Reactive per-cycle threshold check, identical for DP and RT.
-        # DP no longer relies on the pre-scheduled selected_slots for the
+        # Reactive per-cycle price check. DP uses the daily slot average when
+        # available; RT uses only the configured threshold/average sensor.
+        # DP no longer relies on selected_slots membership for the
         # discharge decision — the slot list governs grid-charging only.
         # This eliminates the post-restart and post-midnight blind windows
         # where _dynamic_pricing_schedule is None.
@@ -4073,6 +4092,8 @@ class ChargeDischargeController:
                     threshold = float(avg_state.state)
                 except (ValueError, TypeError):
                     pass
+        if threshold is None and mode == PREDICTIVE_MODE_DYNAMIC_PRICING:
+            threshold = self._dp_daily_avg_price
         if threshold is None:
             threshold = self.max_price_threshold
 
@@ -4080,13 +4101,8 @@ class ChargeDischargeController:
             self.remove_discharge_block("price_discharge")
             return
 
-        price_state = self.hass.states.get(self.price_sensor)
-        if price_state is None:
-            self.remove_discharge_block("price_discharge")
-            return
-        try:
-            current_price = float(price_state.state)
-        except (ValueError, TypeError):
+        current_price = self._get_current_price()
+        if current_price is None:
             self.remove_discharge_block("price_discharge")
             return
 
