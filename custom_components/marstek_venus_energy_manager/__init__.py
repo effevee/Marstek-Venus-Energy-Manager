@@ -311,6 +311,7 @@ class ChargeDischargeController:
             "original_target": None,
             "adjusted_target": None,
         }
+        self._capacity_protection_force_idle = False
 
         # Weekly Full Charge state
         self.weekly_full_charge_enabled = config_entry.data.get(CONF_ENABLE_WEEKLY_FULL_CHARGE, False)
@@ -1311,8 +1312,8 @@ class ChargeDischargeController:
                     "original_target": original_target, "adjusted_target": active_target,
                 })
             elif estimated_house_load > active_target:
-                # House load is below peak limit but above normal target: set target to house load
-                # This makes the PD controller smoothly ramp discharge to 0W
+                # House load is below peak limit but above normal target: hold the
+                # current grid level and stop any existing discharge immediately.
                 # Undo excluded-device adjustment so target aligns with real grid reading
                 if self._excluded_included_adjustment > 0:
                     _LOGGER.info(
@@ -1320,8 +1321,10 @@ class ChargeDischargeController:
                         self._excluded_included_adjustment,
                     )
                     sensor_actual += self._excluded_included_adjustment
-                self.set_setpoint_override("capacity_protection", estimated_house_load, priority=10)
+                self.set_setpoint_override("capacity_protection", sensor_actual, priority=10)
                 active_target = self.compute_active_target()
+                if self.previous_power < 0:
+                    self._capacity_protection_force_idle = True
                 _LOGGER.info(
                     "Capacity Protection ACTIVE: SOC=%.1f%% < %d%%, house_load=%.0fW <= limit=%dW -> idle (target=%.0fW)",
                     avg_soc,
@@ -4442,6 +4445,22 @@ class ChargeDischargeController:
         # before deadband and first-execution handling, otherwise a previous
         # hourly-balance discharge can be kept alive by an early return.
         active_target, sensor_actual = self._apply_capacity_protection(sensor_actual, active_target)
+
+        if self._capacity_protection_force_idle:
+            self._capacity_protection_force_idle = False
+            _LOGGER.info(
+                "Capacity Protection conserving capacity: stopping existing discharge command"
+            )
+            for coordinator in self.coordinators:
+                await self._set_battery_power(coordinator, 0, 0)
+            self.previous_power = 0
+            self.previous_sensor = sensor_actual
+            self.previous_error = 0
+            self.last_output_sign = 0
+            self.sign_changes = 0
+            self._active_discharge_batteries = []
+            self._active_charge_batteries = []
+            return
 
         # CRITICAL: Check deadband on FILTERED sensor (actual grid balance) BEFORE compensation
         # Deadband is centered around the active target grid power
